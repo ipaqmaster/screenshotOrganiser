@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+
+from jModules.CV import CV
+from pathlib import Path
+import argparse
+import cv2
+import glob
+import os
+
+_scriptRoot = os.path.dirname(os.path.realpath(__file__))
+_scriptName = _scriptRoot.split('/')[-1]
+_namespace  = _scriptName
+
+#  _____                 _   _
+# |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
+# | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+# |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
+# |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+#
+
+
+def findFilters():
+    Filters = {}
+
+    for root, dirs, files in os.walk(_scriptRoot + '/filters'):
+        for dirname in dirs:
+            #print("dir:\t%s" % os.path.join(root, dirname))
+            Filters[os.path.join(root, dirname)] = []
+
+        for filename in files:
+            #print("file:\t%s" % os.path.join(root, filename))
+            Filters[root].append(os.path.join(root, filename))
+
+    return Filters
+
+def findImages(directory):
+    """Discover PNG images in a directory."""
+    path = "%s/*.png" % directory
+    return glob.glob(path)
+
+#  __  __       _
+# |  \/  | __ _(_)_ __
+# | |\/| |/ _` | | '_ \
+# | |  | | (_| | | | | |
+# |_|  |_|\__,_|_|_| |_|
+#
+
+def main():
+
+    parser = argparse.ArgumentParser(description="A script for going through and categorising images based common graphical elements.")
+
+    parser.add_argument(
+        '--directory',
+        default=str(Path.home()) + '/Downloads',
+        type=str,
+        help='A directory to filter the images of. Set to ~/Downloads by default.'
+        )
+
+    args = parser.parse_args()
+
+
+    if not os.path.isdir(_scriptRoot + '/filters'):
+        os.mkdir(_scriptRoot + '/filters')
+
+    cv   = CV()
+    PNGs = findImages(args.directory)
+    print("found %s PNGs in %s" % (len(PNGs), args.directory))
+    
+    if not PNGs:
+        print("No PNGs found. Not running.")
+        exit(1)
+
+    Filters = findFilters()
+    if not Filters:
+        print("No filters found.")
+        print("Please create some dirs in filters/ with png snippets inside to search with.")
+        exit(1)
+
+    if not Filters:
+        print("No filters detected. Please create some dirs under filters/ and add some screenshot snippets to search with inside them.")
+        exit(1)
+
+    # Loop over each category looking for screenshot snippets in each full image found
+    for category in Filters:
+        categoryBasename = os.path.basename(category)
+
+        for categoryFilter in Filters[category]:
+            categoryFilterBasename = os.path.basename(categoryFilter)
+            print("\tProcessor found: %s" % categoryFilterBasename)
+
+        # Loop over all images for a given category
+
+        for PNG in PNGs:
+            print("Testing: %s" % PNG)
+
+            for categoryFilter in Filters[category]:
+                result = cv.searchImageInImage(needleImage=categoryFilter, haystackImage=PNG, mode='grayscale', threshold=0.1)
+                if result:
+                    categoryFilterBasename = os.path.basename(categoryFilter)
+                    PNGBasename    = os.path.basename(PNG)
+                    print("Matched [%s]: %s" % (categoryFilterBasename, PNGBasename))
+
+                    PNGDirname     = os.path.dirname (PNG)
+                    PNGDirnameNew  = PNGDirname + '/' + categoryBasename
+                    PNGNewDir      = "%s/%s" % (PNGDirname, categoryBasename)
+                    if not os.path.isdir(PNGNewDir):
+                        os.mkdir(PNGNewDir)
+
+                    PNGNewPath     = "%s/%s" % (PNGNewDir, os.path.basename(PNG))
+                    if not os.path.isfile("PNGNewPath"):
+                        os.rename(PNG, PNGNewPath)
+                    else:
+                        print("Cannot rename already exists: %s > %s" % (PNG, PNGNewPath))
+
+                    break
+
+if __name__ == "__main__":
+    main()
