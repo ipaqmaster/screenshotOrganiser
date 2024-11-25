@@ -50,6 +50,13 @@ def main():
     parser = argparse.ArgumentParser(description="A script for going through and categorising images based common graphical elements.")
 
     parser.add_argument(
+        '--debug',
+        action='store_true',
+        default=False,
+        help='Enable debug logging.'
+        )
+
+    parser.add_argument(
         '--directory',
         default=str(Path.home()) + '/Downloads',
         type=str,
@@ -62,10 +69,10 @@ def main():
     if not os.path.isdir(_scriptRoot + '/filters'):
         os.mkdir(_scriptRoot + '/filters')
 
-    cv   = CV()
+    cv   = CV(debug=args.debug)
     PNGs = findImages(args.directory)
     print("found %s PNGs in %s" % (len(PNGs), args.directory))
-    
+
     if not PNGs:
         print("No PNGs found. Not running.")
         exit(1)
