@@ -97,11 +97,14 @@ def main():
 
         # Loop over all images for a given category
 
-        for PNG in PNGs:
-            print("Testing: %s" % PNG)
+    for PNG in PNGs:
+        print("Testing: %s" % PNG)
+
+        for category in Filters:
+            categoryBasename = os.path.basename(category)
 
             for categoryFilter in Filters[category]:
-                result = cv.searchImageInImage(needleImage=categoryFilter, haystackImage=PNG, mode='grayscale', threshold=0.1)
+                result = cv.searchImageInImage(needleImage=categoryFilter, haystackImage=PNG, mode='grayscale', threshold=0.2)
                 if result:
                     categoryFilterBasename = os.path.basename(categoryFilter)
                     PNGBasename    = os.path.basename(PNG)
