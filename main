@@ -87,7 +87,7 @@ def main():
         print("No filters detected. Please create some dirs under filters/ and add some screenshot snippets to search with inside them.")
         exit(1)
 
-    # Loop over each category looking for screenshot snippets in each full image found
+    # Show detected filters
     for category in Filters:
         categoryBasename = os.path.basename(category)
 
@@ -95,34 +95,45 @@ def main():
             categoryFilterBasename = os.path.basename(categoryFilter)
             print("\tProcessor found: %s" % categoryFilterBasename)
 
-        # Loop over all images for a given category
-
+    # Loop over our PNGs
     for PNG in PNGs:
         print("Testing: %s" % PNG)
+        result = None
 
+        # Loop over each filter and their sub-imgaes for each PNG
         for category in Filters:
-            categoryBasename = os.path.basename(category)
+            if result:
+                break
 
             for categoryFilter in Filters[category]:
-                result = cv.searchImageInImage(needleImage=categoryFilter, haystackImage=PNG, mode='grayscale', threshold=0.2)
                 if result:
-                    categoryFilterBasename = os.path.basename(categoryFilter)
-                    PNGBasename    = os.path.basename(PNG)
-                    print("Matched [%s]: %s" % (categoryFilterBasename, PNGBasename))
-
-                    PNGDirname     = os.path.dirname (PNG)
-                    PNGDirnameNew  = PNGDirname + '/' + categoryBasename
-                    PNGNewDir      = "%s/%s" % (PNGDirname, categoryBasename)
-                    if not os.path.isdir(PNGNewDir):
-                        os.mkdir(PNGNewDir)
-
-                    PNGNewPath     = "%s/%s" % (PNGNewDir, os.path.basename(PNG))
-                    if not os.path.isfile("PNGNewPath"):
-                        os.rename(PNG, PNGNewPath)
-                    else:
-                        print("Cannot rename already exists: %s > %s" % (PNG, PNGNewPath))
-
                     break
+
+                result = cv.searchImageInImage(needleImage=categoryFilter, haystackImage=PNG, mode='grayscale', threshold=0.2)
+
+
+            # Move a PNG to its new category directory if we found a match
+            if result:
+                categoryFilterBasename = os.path.basename(categoryFilter)
+                PNGBasename    = os.path.basename(PNG)
+                print("Matched [%s]: %s" % (categoryFilterBasename, PNGBasename))
+
+                categoryBasename = os.path.basename(category)
+                PNGDirname       = os.path.dirname (PNG)
+                PNGDirnameNew    = PNGDirname + '/' + categoryBasename
+                PNGNewDir        = "%s/%s" % (PNGDirname, categoryBasename)
+
+                if not os.path.isdir(PNGNewDir):
+                    os.mkdir(PNGNewDir)
+
+                PNGNewPath     = "%s/%s" % (PNGNewDir, os.path.basename(PNG))
+
+                if not os.path.isfile("PNGNewPath"):
+                    os.rename(PNG, PNGNewPath)
+                else:
+                    print("Cannot rename already exists: %s > %s" % (PNG, PNGNewPath))
+
+                break
 
 if __name__ == "__main__":
     main()
