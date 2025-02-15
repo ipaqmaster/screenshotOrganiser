@@ -65,9 +65,9 @@ def main():
 
     parser.add_argument(
         '--threshold',
-        default=0.2,
+        default=0.1,
         type=float,
-        help='An optional threshold to declare a filter image matched. Default is 0.2'
+        help='An optional threshold to declare a filter image matched. Default is 0.1'
         )
 
     parser.add_argument(
